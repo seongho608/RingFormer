@@ -42,7 +42,7 @@ def load_checkpoint(checkpoint_path, models, optimizer=None):
             else:
                 model.load_state_dict(new_state_dict)
     else:
-        saved_state_dict = checkpoint_dict["model"]
+        saved_state_dict = checkpoint_dict["models"]["model"]
         if hasattr(models, "module"):
             state_dict = models.module.state_dict()
         else:
@@ -70,7 +70,6 @@ def save_checkpoint(models, optimizer, learning_rate, iteration, checkpoint_path
     logger.info("Saving models and optimizer state at iteration {} to {}".format(
         iteration, checkpoint_path))
     
-    # 모델이 리스트인 경우 처리
     if isinstance(models, list):
         model_dict = {}
         for i, model in enumerate(models):
@@ -80,7 +79,6 @@ def save_checkpoint(models, optimizer, learning_rate, iteration, checkpoint_path
                 state_dict = model.state_dict()
             model_dict[f'model_{i}'] = state_dict
     else:
-        # 모델이 단일 객체인 경우 처리
         if hasattr(models, 'module'):
             state_dict = models.module.state_dict()
         else:
@@ -213,10 +211,10 @@ def get_hparams(init=True):
         "-c",
         "--config",
         type=str,
-        default="./configs/base.json",
+        default="./configs/vits2_ljs_ring.json",
         help="JSON file for configuration",
     )
-    parser.add_argument("-m", "--model", type=str, required=True, help="Model name")
+    parser.add_argument("-m", "--model", type=str, required=True, help="Model name", default="test")
 
     args = parser.parse_args()
     model_dir = os.path.join("./logs", args.model)

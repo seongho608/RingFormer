@@ -1315,7 +1315,6 @@ class SynthesizerTrn(nn.Module):
         z_slice, ids_slice = commons.rand_slice_segments(
             z, y_lengths, self.segment_size
         )
-        print(z_slice.shape)
         o, mag, phase = self.dec(z_slice, g=g)
         return (
             o,
