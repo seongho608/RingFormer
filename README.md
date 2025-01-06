@@ -13,7 +13,7 @@
 
 #### Seongho Hong, Yong-Hoon Choi
 
-[[Paper]]() - [[Code]](https://github.com/seongho608/RingFormer) - [[Demo]](https://seongho608.github.io/)
+[[Paper]](https://arxiv.org/abs/2501.01182) - [[Code]](https://github.com/seongho608/RingFormer) - [[Demo]](https://seongho608.github.io/)
 
 ## Getting Started
 
