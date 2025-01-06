@@ -10,3 +10,4 @@ build
 *.c
 monotonic_align/monotonic_align
 LJSpeech-1.1/
+attention_maps/
