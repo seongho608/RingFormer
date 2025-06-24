@@ -3,6 +3,21 @@ from torch.nn import functional as F
 
 import commons
 
+def phase_loss(x_fft: torch.Tensor, g_fft: torch.Tensor, reduction: str = 'mean') -> torch.Tensor:
+    x_norm = x_fft / (x_fft.abs() + 1e-9)
+    g_norm = g_fft / (g_fft.abs() + 1e-9)
+
+    phase_similarity = (x_norm * g_norm.conj()).real
+    loss = 1.0 - phase_similarity
+
+    if reduction == 'mean':
+        return loss.mean()
+    elif reduction == 'sum':
+        return loss.sum()
+    elif reduction == 'none':
+        return loss
+    else:
+        raise ValueError(f"Unsupported reduction mode: {reduction}")
 
 def feature_loss(fmap_r, fmap_g):
     loss = 0

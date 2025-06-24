@@ -28,7 +28,7 @@ from models import (
     AVAILABLE_FLOW_TYPES,
     AVAILABLE_DURATION_DISCRIMINATOR_TYPES
 )
-from losses import generator_loss, discriminator_loss, feature_loss, kl_loss
+from losses import generator_loss, discriminator_loss, feature_loss, kl_loss, phase_loss
 from preprocess.mel_processing import mel_spectrogram_torch, spec_to_mel_torch
 from text.symbols import symbols
 
@@ -381,9 +381,10 @@ def train_and_evaluate(
                 y, ids_slice * hps.data.hop_length, hps.train.segment_size
             )  # slice
             reshaped_y = y.view(-1, y.size(-1))  # (64 * 1, 9216)
+            reshaped_y_hat = y_hat.view(-1, y_hat.size(-1))
             y_stft = torch.stft(reshaped_y, n_fft=hps.data.filter_length, hop_length=hps.data.hop_length, win_length=hps.data.win_length, return_complex=True)
+            y_hat_stft = torch.stft(reshaped_y_hat, n_fft=hps.data.filter_length, hop_length=hps.data.hop_length, win_length=hps.data.win_length, return_complex=True)
             target_magnitude = torch.abs(y_stft).transpose(1, 2)
-            target_phase = torch.angle(y_stft).transpose(1, 2)
             
             # Discriminator
             y_d_hat_r, y_d_hat_g, _, _ = net_d(y, y_hat.detach())
@@ -437,14 +438,15 @@ def train_and_evaluate(
                 loss_kl = kl_loss(z_p, logs_q, m_p, logs_p, z_mask) * hps.train.c_kl
 
                 loss_magnitude = torch.nn.functional.l1_loss(mag, target_magnitude)
-                loss_phase = torch.nn.functional.l1_loss(phase, target_phase)
+                loss_phase = phase_loss(y_stft, y_hat_stft)
+                loss_sd = (loss_magnitude + loss_phase) * hps.train.c_sd
                 
                 loss_fm = feature_loss(fmap_r, fmap_g) + feature_loss(cqt_fmap_r, cqt_fmap_g)
                 loss_mpd_gen, losses_mpd_gen = generator_loss(y_d_hat_g)
                 loss_cqtd_gen, losses_cqtd_gen = generator_loss(y_cqtd_hat_g)
                 loss_gen = loss_mpd_gen + loss_cqtd_gen
                 
-                loss_gen_all = loss_gen + loss_fm + loss_mel + loss_dur + loss_kl + loss_magnitude + loss_phase
+                loss_gen_all = loss_gen + loss_fm + loss_mel + loss_dur + loss_kl + loss_sd
                 if net_dur_disc is not None:
                     loss_dur_gen, losses_dur_gen = generator_loss(y_dur_hat_g)
                     loss_gen_all += loss_dur_gen
